@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Model Marketplace</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f6f9;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .model-card {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .rating {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create AI Model</h2>
+        <input type="text" id="modelName" placeholder="Model Name">
+        <textarea id="modelDescription" placeholder="Model Description"></textarea>
+        <select id="modelType">
+            <option value="Classification">Classification</option>
+            <option value="Regression">Regression</option>
+            <option value="NeuralNetwork">Neural Network</option>
+            <option value="GenerativeAI">Generative AI</option>
+            <option value="Other">Other</option>
+        </select>
+        <input type="number" id="modelPrice" placeholder="Price">
+        <button onclick="createAIModel()">Create Model</button>
+    </div>
+
+    <div class="container">
+        <h2>Purchase Model License</h2>
+        <input type="number" id="purchaseModelId" placeholder="Model ID">
+        <button onclick="purchaseModelLicense()">Purchase License</button>
+    </div>
+
+    <div class="container">
+        <h2>Rate AI Model</h2>
+        <input type="number" id="rateModelId" placeholder="Model ID">
+        <select id="ratingValue">
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+        </select>
+        <textarea id="ratingComment" placeholder="Rating Comment"></textarea>
+        <button onclick="rateAIModel()">Submit Rating</button>
+    </div>
+
+    <div class="container">
+        <h2>AI Models</h2>
+        <div id="modelsList"></div>
+    </div>
+
+    <script type="module">
+        import { AIModelMarketplace } from 'declarations/backend';
+
+        // Fungsi untuk membuat model AI
+        window.createAIModel = async () => {
+            const name = document.getElementById('modelName').value;
+            const description = document.getElementById('modelDescription').value;
+            const modelType = document.getElementById('modelType').value;
+            const price = parseInt(document.getElementById('modelPrice').value);
+
+            try {
+                const result = await AIModelMarketplace.createAIModel(name, description, modelType, price);
+                if (result.ok) {
+                    alert(`AI Model created with ID: ${result.ok}`);
+                    loadAIModels();
+                } else {
+                    alert(`Error: ${result.err}`);
+                }
+            } catch (error) {
+                console.error('Model creation failed:', error);
+            }
+        };
+
+        // Fungsi untuk membeli lisensi model
+        window.purchaseModelLicense = async () => {
+            const modelId = parseInt(document.getElementById('purchaseModelId').value);
+
+            try {
+                const result = await AIModelMarketplace.purchaseModelLicense(modelId);
+                if (result.ok) {
+                    alert('Model license purchased successfully');
+                } else {
+                    alert(`Error: ${result.err}`);
+                }
+            } catch (error) {
+                console.error('License purchase failed:', error);
+            }
+        };
+
+        // Fungsi untuk rating model
+        window.rateAIModel = async () => {
+            const modelId = parseInt(document.getElementById('rateModelId').value);
+            const rating = parseInt(document.getElementById('ratingValue').value);
+            const comment = document.getElementById('ratingComment').value;
+
+            try {
+                const result = await AIModelMarketplace.rateAIModel(modelId, rating, comment);
+                if (result.ok) {
+                    alert('Model rated successfully');
+                    loadAIModels();
+                } else {
+                    alert(`Error: ${result.err}`);
+                }
+            } catch (error) {
+                console.error('Rating failed:', error);
+            }
+        };
+
+        // Fungsi untuk memuat daftar model AI
+        async function loadAIModels() {
+            const modelsList = document.getElementById('modelsList');
+            modelsList.innerHTML = '';
+
+            try {
+                const models = await AIModelMarketplace.getAllAIModels();
+                models.forEach(([id, model]) => {
+                    const modelDiv = document.createElement('div');
+                    modelDiv.className = 'model-card';
+                    modelDiv.innerHTML = `
+                        <h3>${model.name}</h3>
+                        <p>${model.description}</p>
+                        <div>Type: ${model.modelType}</div>
+                        <div>Price: ${model.price}</div>
+                        <div class="rating">
+                            Rating: ${model.averageRating.toFixed(1)} 
+                            (${model.totalRatings} ratings)
+                        </div>
+                        <div>Usage Count: ${model.usageCount}</div>
+                        <div>Verification: ${model.verificationStatus}</div>
+                    `;
+                    modelsList.appendChild(modelDiv);
+                });
+            } catch (error) {
+                console.error('Failed to load models:', error);
+            }
+        }
+
+        // Muat model saat halaman dimuat
+        loadAIModels();
+    </script>
+</body>
+</html>
